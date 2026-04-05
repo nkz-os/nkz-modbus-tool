@@ -182,7 +182,7 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self, "About ModbusTool",
             "<h2>ModbusTool</h2>"
-            "<p>Universal Modbus RTU / TCP Configuration & Monitoring Tool</p>"
+            "<p>Universal Modbus RTU / TCP Configuration & Monitoring Tool for Linux</p>"
             "<p><b>Features:</b></p>"
             "<ul>"
             "<li>Serial RTU and TCP/IP connections</li>"
@@ -195,6 +195,11 @@ class MainWindow(QMainWindow):
             "<li>Data logging with CSV export</li>"
             "</ul>"
             "<p>All function codes supported: FC01-FC06, FC15, FC16</p>"
+            "<hr>"
+            "<p>Developed by <a href='https://robotika.cloud/'>Robotika.cloud</a><br>"
+            "Contact: <a href='mailto:kate@robotika.cloud'>kate@robotika.cloud</a></p>"
+            "<p>Part of the <a href='https://nkz-os.org'>nkz-os.org</a> project</p>"
+            "<p>License: <b>AGPL-3.0</b></p>"
         )
 
     def closeEvent(self, event):
