@@ -1,0 +1,91 @@
+{
+    "name": "Temperature & Humidity Sensor (RS485)",
+    "manufacturer": "Generic / LY485",
+    "description": "RS485 Modbus RTU temperature and humidity sensor",
+    "default_address": 1,
+    "default_baudrate": 9600,
+    "default_parity": "N",
+    "default_stopbits": 1,
+    "default_databits": 8,
+    "data_registers": [
+        {
+            "address": "0x0000",
+            "name": "Humidity",
+            "description": "Relative humidity (value / 10)",
+            "unit": "%RH",
+            "scale": 0.1,
+            "data_type": "uint16",
+            "access": "read",
+            "function_code": 3
+        },
+        {
+            "address": "0x0001",
+            "name": "Temperature",
+            "description": "Temperature (value / 10, signed for negatives)",
+            "unit": "\u00b0C",
+            "scale": 0.1,
+            "data_type": "int16",
+            "access": "read",
+            "function_code": 3
+        }
+    ],
+    "config_registers": [
+        {
+            "address": "0x0100",
+            "name": "Device Address",
+            "description": "Modbus slave address",
+            "data_type": "uint16",
+            "access": "readwrite",
+            "min": 1,
+            "max": 247,
+            "function_code_read": 3,
+            "function_code_write": 6
+        },
+        {
+            "address": "0x0101",
+            "name": "Baud Rate",
+            "description": "Communication baud rate",
+            "data_type": "uint16",
+            "access": "readwrite",
+            "function_code_read": 3,
+            "function_code_write": 6,
+            "value_map": {
+                "1": 1200,
+                "2": 2400,
+                "3": 4800,
+                "4": 9600,
+                "5": 14400,
+                "6": 19200
+            }
+        },
+        {
+            "address": "0x0102",
+            "name": "Humidity Address",
+            "description": "Secondary humidity address",
+            "data_type": "uint16",
+            "access": "readwrite",
+            "function_code_read": 3,
+            "function_code_write": 6
+        },
+        {
+            "address": "0x0104",
+            "name": "Temperature Calibration",
+            "description": "Temperature correction offset",
+            "data_type": "int16",
+            "access": "readwrite",
+            "unit": "\u00b0C (x10)",
+            "function_code_read": 3,
+            "function_code_write": 6
+        },
+        {
+            "address": "0x0105",
+            "name": "Humidity Calibration",
+            "description": "Humidity correction offset",
+            "data_type": "int16",
+            "access": "readwrite",
+            "unit": "%RH (x10)",
+            "function_code_read": 3,
+            "function_code_write": 6
+        }
+    ]
+}

@@ -1,0 +1,60 @@
+{
+    "name": "RS-GH-N01-AL (PAR Sensor)",
+    "manufacturer": "Shandong Renke",
+    "description": "Photosynthetically active radiation sensor 400-700nm",
+    "default_address": 1,
+    "default_baudrate": 4800,
+    "default_parity": "N",
+    "default_stopbits": 1,
+    "default_databits": 8,
+    "data_registers": [
+        {
+            "address": "0x0000",
+            "name": "PAR Value",
+            "description": "Photosynthetically active radiation",
+            "unit": "\u00b5mol/m\u00b2\u00b7s",
+            "scale": 1.0,
+            "data_type": "uint16",
+            "access": "read",
+            "function_code": 3
+        },
+        {
+            "address": "0x0052",
+            "name": "Deviation",
+            "description": "Calibration deviation value",
+            "unit": "\u00b5mol/m\u00b2\u00b7s",
+            "scale": 1.0,
+            "data_type": "int16",
+            "access": "readwrite",
+            "function_code_read": 3,
+            "function_code_write": 6
+        }
+    ],
+    "config_registers": [
+        {
+            "address": "0x07D0",
+            "name": "Device Address",
+            "description": "Modbus slave address (1-254)",
+            "data_type": "uint16",
+            "access": "readwrite",
+            "min": 1,
+            "max": 254,
+            "function_code_read": 3,
+            "function_code_write": 6
+        },
+        {
+            "address": "0x07D1",
+            "name": "Baud Rate",
+            "description": "Communication baud rate",
+            "data_type": "uint16",
+            "access": "readwrite",
+            "function_code_read": 3,
+            "function_code_write": 6,
+            "value_map": {
+                "0": 2400,
+                "1": 4800,
+                "2": 9600
+            }
+        }
+    ]
+}
