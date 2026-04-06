@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 
 from core.modbus_client import ModbusClient
 from core.scanner import BusScanWorker, BaudDetectWorker, COMMON_BAUDRATES
+from core.i18n import tr
 
 
 class ScannerTab(QWidget):
@@ -34,7 +35,7 @@ class ScannerTab(QWidget):
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         # Bus Scan section
-        scan_group = QGroupBox("Bus Scan — Find Devices")
+        scan_group = QGroupBox(tr("Bus Scan — Find Devices"))
         scan_layout = QVBoxLayout(scan_group)
 
         params_layout = QHBoxLayout()
@@ -43,12 +44,12 @@ class ScannerTab(QWidget):
         self.addr_start = QSpinBox()
         self.addr_start.setRange(1, 247)
         self.addr_start.setValue(1)
-        form1.addRow("From addr:", self.addr_start)
+        form1.addRow(tr("From:"), self.addr_start)
 
         self.addr_end = QSpinBox()
         self.addr_end.setRange(1, 247)
         self.addr_end.setValue(50)
-        form1.addRow("To addr:", self.addr_end)
+        form1.addRow(tr("To:"), self.addr_end)
         params_layout.addLayout(form1)
 
         form2 = QFormLayout()
@@ -56,14 +57,14 @@ class ScannerTab(QWidget):
         self.scan_timeout.setRange(100, 5000)
         self.scan_timeout.setValue(300)
         self.scan_timeout.setSuffix(" ms")
-        form2.addRow("Timeout:", self.scan_timeout)
+        form2.addRow(tr("Timeout:"), self.scan_timeout)
         params_layout.addLayout(form2)
 
         scan_layout.addLayout(params_layout)
 
         # Baud rates to scan
         baud_layout = QHBoxLayout()
-        baud_layout.addWidget(QLabel("Baud rates:"))
+        baud_layout.addWidget(QLabel(tr("Baud Rates") + ":"))
         self.baud_checks = {}
         for baud in COMMON_BAUDRATES:
             cb = QCheckBox(str(baud))
@@ -76,11 +77,11 @@ class ScannerTab(QWidget):
 
         # Parity options
         parity_layout = QHBoxLayout()
-        parity_layout.addWidget(QLabel("Parity:"))
-        self.parity_n = QCheckBox("None")
+        parity_layout.addWidget(QLabel(tr("Parity:") ))
+        self.parity_n = QCheckBox(tr("None (N)"))
         self.parity_n.setChecked(True)
-        self.parity_e = QCheckBox("Even")
-        self.parity_o = QCheckBox("Odd")
+        self.parity_e = QCheckBox(tr("Even (E)"))
+        self.parity_o = QCheckBox(tr("Odd (O)"))
         parity_layout.addWidget(self.parity_n)
         parity_layout.addWidget(self.parity_e)
         parity_layout.addWidget(self.parity_o)
@@ -93,19 +94,19 @@ class ScannerTab(QWidget):
         self.scan_progress.setFormat("%v / %m — %p%")
         scan_layout.addWidget(self.scan_progress)
 
-        self.scan_status = QLabel("Ready to scan")
+        self.scan_status = QLabel(tr("Ready to scan"))
         self.scan_status.setStyleSheet("color: #666;")
         scan_layout.addWidget(self.scan_status)
 
         # Buttons
         btn_layout = QHBoxLayout()
-        self.scan_btn = QPushButton("Start Scan")
-        self.scan_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; font-weight: bold; padding: 6px 16px; }")
+        self.scan_btn = QPushButton(tr("Start Scan"))
+        self.scan_btn.setStyleSheet("QPushButton { background-color: #1976D2; color: white; font-weight: bold; padding: 6px 16px; border-radius: 4px; }")
         self.scan_btn.clicked.connect(self._start_scan)
-        self.stop_scan_btn = QPushButton("Stop")
+        self.stop_scan_btn = QPushButton(tr("Stop"))
         self.stop_scan_btn.setEnabled(False)
         self.stop_scan_btn.clicked.connect(self._stop_scan)
-        self.clear_btn = QPushButton("Clear Results")
+        self.clear_btn = QPushButton(tr("Clear Results"))
         self.clear_btn.clicked.connect(self._clear_results)
         btn_layout.addWidget(self.scan_btn)
         btn_layout.addWidget(self.stop_scan_btn)
@@ -116,18 +117,18 @@ class ScannerTab(QWidget):
         top_layout.addWidget(scan_group)
 
         # Baud Rate Detection
-        detect_group = QGroupBox("Auto-Detect Baud Rate")
+        detect_group = QGroupBox(tr("Auto-Detect Baud Rate"))
         detect_layout = QHBoxLayout(detect_group)
 
         detect_form = QFormLayout()
         self.detect_addr = QSpinBox()
         self.detect_addr.setRange(1, 247)
         self.detect_addr.setValue(1)
-        detect_form.addRow("Slave address:", self.detect_addr)
+        detect_form.addRow(tr("Slave Address:"), self.detect_addr)
         detect_layout.addLayout(detect_form)
 
-        self.detect_btn = QPushButton("Auto-Detect")
-        self.detect_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; font-weight: bold; padding: 6px 16px; }")
+        self.detect_btn = QPushButton(tr("Auto-Detect"))
+        self.detect_btn.setStyleSheet("QPushButton { background-color: #E65100; color: white; font-weight: bold; padding: 6px 16px; border-radius: 4px; }")
         self.detect_btn.clicked.connect(self._start_baud_detect)
         detect_layout.addWidget(self.detect_btn)
 
@@ -143,11 +144,13 @@ class ScannerTab(QWidget):
         results_layout = QVBoxLayout(results_widget)
         results_layout.setContentsMargins(0, 0, 0, 0)
 
-        results_layout.addWidget(QLabel("Discovered Devices:"))
+        results_layout.addWidget(QLabel(tr("Devices Found") + ":"))
 
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(5)
-        self.results_table.setHorizontalHeaderLabels(["Address", "Baud Rate", "Parity", "Type", "Register 0 Value"])
+        self.results_table.setHorizontalHeaderLabels([
+            tr("Address"), tr("Baud Rate"), tr("Parity"), tr("Type"), tr("Register 0 Value")
+        ])
         self.results_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.results_table.setAlternatingRowColors(True)
         self.results_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -189,7 +192,7 @@ class ScannerTab(QWidget):
     def _start_scan(self):
         bauds = self._get_selected_baudrates()
         if not bauds:
-            self.scan_status.setText("Select at least one baud rate!")
+            self.scan_status.setText(tr("Select at least one baud rate!"))
             return
 
         conn_tab = self.connection_panel.conn_tabs.currentIndex()
@@ -198,7 +201,7 @@ class ScannerTab(QWidget):
             # Serial mode — need a valid port
             port = self.connection_panel.get_serial_port()
             if not port:
-                QMessageBox.warning(self, "No Port", "Select a serial port before scanning.")
+                QMessageBox.warning(self, tr("No Port"), tr("Select a serial port before scanning."))
                 return
         else:
             port = ""
@@ -210,7 +213,7 @@ class ScannerTab(QWidget):
 
         self.scan_btn.setEnabled(False)
         self.stop_scan_btn.setEnabled(True)
-        self.scan_status.setText("Scanning...")
+        self.scan_status.setText(tr("Scanning..."))
 
         self._scan_worker = BusScanWorker(
             connection_type="tcp" if conn_tab == 1 else "serial",
@@ -233,7 +236,7 @@ class ScannerTab(QWidget):
     def _stop_scan(self):
         if self._scan_worker:
             self._scan_worker.abort()
-            self.scan_status.setText("Stopping...")
+            self.scan_status.setText(tr("Stopping..."))
 
     def _on_scan_progress(self, current, total, text):
         self.scan_progress.setMaximum(total)
@@ -251,24 +254,24 @@ class ScannerTab(QWidget):
 
     def _on_scan_complete(self, devices):
         count = len(devices)
-        self.scan_status.setText(f"Scan complete. Found {count} device(s).")
+        self.scan_status.setText(f"{tr('Scan complete')}. {count} {tr('device(s) found')}.")
         self.scan_btn.setEnabled(True)
         self.stop_scan_btn.setEnabled(False)
 
     def _on_scan_error(self, error):
-        self.scan_status.setText(f"Error: {error}")
+        self.scan_status.setText(f"{tr('Error')}: {error}")
         self.scan_btn.setEnabled(True)
         self.stop_scan_btn.setEnabled(False)
 
     def _clear_results(self):
         self.results_table.setRowCount(0)
         self.scan_progress.setValue(0)
-        self.scan_status.setText("Ready to scan")
+        self.scan_status.setText(tr("Ready to scan"))
 
     def _start_baud_detect(self):
         port = self.connection_panel.get_serial_port()
         if not port:
-            self.detect_status.setText("No serial port selected!")
+            self.detect_status.setText(tr("No port selected") + "!")
             self.detect_status.setStyleSheet("color: #f44336;")
             return
 
@@ -277,8 +280,8 @@ class ScannerTab(QWidget):
             self.connection_panel._disconnect()
 
         self.detect_btn.setEnabled(False)
-        self.detect_status.setText("Detecting...")
-        self.detect_status.setStyleSheet("color: #FF9800;")
+        self.detect_status.setText(tr("Detecting..."))
+        self.detect_status.setStyleSheet("color: #E65100;")
 
         self._baud_worker = BaudDetectWorker(
             serial_port=port,
@@ -293,10 +296,11 @@ class ScannerTab(QWidget):
     def _on_baud_detected(self, result):
         if result["success"]:
             self.detect_status.setText(
-                f"Found: {result['baudrate']} baud, parity={result['parity']}, "
+                f"{tr('Found')}: {result['baudrate']} baud, "
+                f"{tr('Parity').lower()}={result['parity']}, "
                 f"reg[0]={result['values']}"
             )
-            self.detect_status.setStyleSheet("color: #4CAF50; font-weight: bold;")
+            self.detect_status.setStyleSheet("color: #2E7D32; font-weight: bold;")
             # Auto-fill connection panel
             self.connection_panel.baud_combo.setCurrentText(str(result["baudrate"]))
             parity_map = {"N": 0, "E": 1, "O": 2}

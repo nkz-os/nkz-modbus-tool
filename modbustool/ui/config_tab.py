@@ -14,6 +14,7 @@ from PyQt6.QtGui import QFont, QColor
 
 from core.modbus_client import ModbusClient
 from core.device_profiles import DeviceProfile, RegisterDef
+from core.i18n import tr
 
 
 class WriteConfirmDialog(QDialog):
@@ -21,24 +22,24 @@ class WriteConfirmDialog(QDialog):
 
     def __init__(self, register_name: str, address: int, old_value, new_value, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Confirm Write")
+        self.setWindowTitle(tr("Confirm Write"))
         self.setMinimumWidth(400)
 
         layout = QVBoxLayout(self)
 
-        warning = QLabel("You are about to write to a device register.\nThis may change device behavior.")
-        warning.setStyleSheet("color: #FF9800; font-weight: bold; padding: 8px;")
+        warning = QLabel(tr("You are about to write to a device register."))
+        warning.setStyleSheet("color: #E65100; font-weight: bold; padding: 8px;")
         layout.addWidget(warning)
 
         info = QGridLayout()
-        info.addWidget(QLabel("Register:"), 0, 0)
+        info.addWidget(QLabel(tr("Register") + ":"), 0, 0)
         info.addWidget(QLabel(f"{register_name} (0x{address:04X})"), 0, 1)
         if old_value is not None:
-            info.addWidget(QLabel("Current value:"), 1, 0)
+            info.addWidget(QLabel(tr("Current value") + ":"), 1, 0)
             info.addWidget(QLabel(str(old_value)), 1, 1)
-        info.addWidget(QLabel("New value:"), 2, 0)
+        info.addWidget(QLabel(tr("New value") + ":"), 2, 0)
         new_label = QLabel(str(new_value))
-        new_label.setStyleSheet("font-weight: bold; color: #2196F3;")
+        new_label.setStyleSheet("font-weight: bold; color: #1976D2;")
         info.addWidget(new_label, 2, 1)
         layout.addLayout(info)
 
@@ -66,10 +67,9 @@ class ProfileConfigWidget(QWidget):
         self._main_layout.setContentsMargins(0, 0, 0, 0)
 
         self._no_profile_label = QLabel(
-            "No device profile selected.\n\n"
-            "Select a profile from the connection panel to see\n"
-            "device-specific configuration options.\n\n"
-            "You can still use the Generic Register Read/Write tab below."
+            tr("No profile selected") + "\n\n"
+            + tr("Select a profile to auto-configure parameters") + "\n\n"
+            + tr("Generic Read/Write")
         )
         self._no_profile_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._no_profile_label.setStyleSheet("color: #888; font-size: 13px; padding: 40px;")
@@ -109,14 +109,14 @@ class ProfileConfigWidget(QWidget):
         self._scroll_layout.addWidget(header)
 
         # Read All button
-        read_all_btn = QPushButton("Read All Configuration")
-        read_all_btn.setStyleSheet("QPushButton { background-color: #9C27B0; color: white; font-weight: bold; padding: 8px; }")
+        read_all_btn = QPushButton(tr("Read All Configuration"))
+        read_all_btn.setStyleSheet("QPushButton { background-color: #7B1FA2; color: white; font-weight: bold; padding: 8px; border-radius: 4px; }")
         read_all_btn.clicked.connect(self._read_all)
         self._scroll_layout.addWidget(read_all_btn)
 
         # Data registers group
         if self._profile.data_registers:
-            data_group = QGroupBox("Data Registers (Read Only)")
+            data_group = QGroupBox(tr("Data Registers") + " (" + tr("Read") + ")")
             data_layout = QVBoxLayout(data_group)
             for reg in self._profile.data_registers:
                 widget = self._create_register_row(reg, data_layout, readonly=True)
@@ -125,7 +125,7 @@ class ProfileConfigWidget(QWidget):
 
         # Config registers group
         if self._profile.config_registers:
-            config_group = QGroupBox("Configuration Registers (Read/Write)")
+            config_group = QGroupBox(tr("Configuration Registers") + " (" + tr("Read") + "/" + tr("Write") + ")")
             config_layout = QVBoxLayout(config_group)
             for reg in self._profile.config_registers:
                 widget = self._create_register_row(reg, config_layout, readonly=False)
@@ -162,7 +162,7 @@ class ProfileConfigWidget(QWidget):
         row_layout.addWidget(unit_label)
 
         # Read button
-        read_btn = QPushButton("Read")
+        read_btn = QPushButton(tr("Read"))
         read_btn.setFixedWidth(60)
         read_btn.clicked.connect(lambda: self._read_register(reg, value_label))
         row_layout.addWidget(read_btn)
@@ -187,9 +187,9 @@ class ProfileConfigWidget(QWidget):
                 write_spin.setMinimumWidth(80)
                 row_layout.addWidget(write_spin)
 
-            write_btn = QPushButton("Write")
+            write_btn = QPushButton(tr("Write"))
             write_btn.setFixedWidth(60)
-            write_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; }")
+            write_btn.setStyleSheet("QPushButton { background-color: #E65100; color: white; border-radius: 3px; }")
             write_btn.clicked.connect(
                 lambda checked, r=reg, vl=value_label, ws=write_spin, wc=write_combo:
                 self._write_register(r, vl, ws, wc)
@@ -224,7 +224,7 @@ class ProfileConfigWidget(QWidget):
         if ok and vals:
             display = reg.display_value(vals[0])
             value_label.setText(display)
-            value_label.setStyleSheet("color: #2196F3; font-weight: bold;")
+            value_label.setStyleSheet("color: #1976D2; font-weight: bold;")
         else:
             value_label.setText("ERR")
             value_label.setStyleSheet("color: red;")
@@ -257,7 +257,7 @@ class ProfileConfigWidget(QWidget):
         ok, msg = self.client.write_single_register(reg.address, raw_value, slave)
         if ok:
             value_label.setText(display_value)
-            value_label.setStyleSheet("color: #4CAF50; font-weight: bold;")
+            value_label.setStyleSheet("color: #2E7D32; font-weight: bold;")
 
             # Auto-reconnect if baud rate or address was changed
             is_baud = "baud" in reg.name.lower()
@@ -270,25 +270,22 @@ class ProfileConfigWidget(QWidget):
                 ok_r, msg_r = self.client.update_serial_params(baudrate=new_baud)
                 if ok_r:
                     QMessageBox.information(
-                        self, "Success",
-                        f"Baud rate changed to {new_baud}.\n"
-                        f"Serial port reconnected automatically.")
+                        self, tr("Success"),
+                        f"{tr('Baud rate changed')} → {new_baud}.\n"
+                        f"{tr('Serial port reconnected automatically.')}")
                 else:
                     QMessageBox.warning(
-                        self, "Partial Success",
-                        f"Baud rate written to device, but reconnect failed:\n{msg_r}\n"
-                        f"Reconnect manually at {new_baud} baud.")
+                        self, tr("Partial Success"),
+                        f"{tr('Baud rate written, but reconnect failed')}:\n{msg_r}")
             elif is_addr:
                 self.connection_panel.slave_spin.setValue(raw_value)
                 QMessageBox.information(
-                    self, "Success",
-                    f"Device address changed to {raw_value}.\n"
-                    f"Slave address updated automatically.")
+                    self, tr("Success"),
+                    f"{tr('Device address changed')} → {raw_value}.")
             else:
-                QMessageBox.information(self, "Success",
-                                        f"Written successfully.\n{msg}")
+                QMessageBox.information(self, tr("Success"), msg)
         else:
-            QMessageBox.warning(self, "Write Failed", msg)
+            QMessageBox.warning(self, tr("Write Failed"), msg)
 
     def _read_all(self):
         for w in self._register_widgets:
@@ -309,69 +306,69 @@ class GenericRegisterWidget(QWidget):
         layout.setContentsMargins(6, 6, 6, 6)
 
         # --- Write Single Register ---
-        write_group = QGroupBox("Write Single Register (FC 0x06)")
+        write_group = QGroupBox(tr("Write Single Register (FC06)"))
         write_layout = QFormLayout(write_group)
 
         self.write_addr = QSpinBox()
         self.write_addr.setRange(0, 65535)
         self.write_addr.setPrefix("0x")
         self.write_addr.setDisplayIntegerBase(16)
-        write_layout.addRow("Register Address:", self.write_addr)
+        write_layout.addRow(tr("Register Address:"), self.write_addr)
 
         self.write_value = QSpinBox()
         self.write_value.setRange(0, 65535)
-        write_layout.addRow("Value (dec):", self.write_value)
+        write_layout.addRow(tr("Value (dec):"), self.write_value)
 
         self.write_hex_label = QLabel("= 0x0000")
         self.write_value.valueChanged.connect(
             lambda v: self.write_hex_label.setText(f"= 0x{v:04X}")
         )
-        write_layout.addRow("Value (hex):", self.write_hex_label)
+        write_layout.addRow(tr("Value (hex):"), self.write_hex_label)
 
-        write_btn = QPushButton("Write Register")
-        write_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; font-weight: bold; padding: 8px; }")
+        write_btn = QPushButton(tr("Write Register"))
+        write_btn.setStyleSheet("QPushButton { background-color: #E65100; color: white; font-weight: bold; padding: 8px; border-radius: 4px; }")
         write_btn.clicked.connect(self._write_single)
         write_layout.addRow(write_btn)
 
         layout.addWidget(write_group)
 
         # --- Write Multiple Registers ---
-        multi_group = QGroupBox("Write Multiple Registers (FC 0x10)")
+        multi_group = QGroupBox(tr("Write Multiple Registers (FC16)"))
         multi_layout = QFormLayout(multi_group)
 
         self.multi_addr = QSpinBox()
         self.multi_addr.setRange(0, 65535)
         self.multi_addr.setPrefix("0x")
         self.multi_addr.setDisplayIntegerBase(16)
-        multi_layout.addRow("Start Address:", self.multi_addr)
+        multi_layout.addRow(tr("Start Address:"), self.multi_addr)
 
         self.multi_values = QLineEdit()
-        self.multi_values.setPlaceholderText("Comma-separated: 100, 200, 300  or hex: 0x64, 0xC8")
-        multi_layout.addRow("Values:", self.multi_values)
+        self.multi_values.setPlaceholderText("100, 200, 300  /  0x64, 0xC8")
+        multi_layout.addRow(tr("Values:"), self.multi_values)
 
-        multi_btn = QPushButton("Write Registers")
-        multi_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; font-weight: bold; padding: 8px; }")
+        multi_btn = QPushButton(tr("Write Registers"))
+        multi_btn.setStyleSheet("QPushButton { background-color: #E65100; color: white; font-weight: bold; padding: 8px; border-radius: 4px; }")
         multi_btn.clicked.connect(self._write_multiple)
         multi_layout.addRow(multi_btn)
 
         layout.addWidget(multi_group)
 
         # --- Write Coil ---
-        coil_group = QGroupBox("Write Coil (FC 0x05)")
+        coil_group = QGroupBox(tr("Write Coil (FC05)"))
         coil_layout = QFormLayout(coil_group)
 
         self.coil_addr = QSpinBox()
         self.coil_addr.setRange(0, 65535)
         self.coil_addr.setPrefix("0x")
         self.coil_addr.setDisplayIntegerBase(16)
-        coil_layout.addRow("Coil Address:", self.coil_addr)
+        coil_layout.addRow(tr("Coil Address:"), self.coil_addr)
 
         self.coil_value = QComboBox()
         self.coil_value.addItems(["OFF (0)", "ON (1)"])
-        coil_layout.addRow("Value:", self.coil_value)
+        coil_layout.addRow(tr("Value:"), self.coil_value)
 
-        coil_btn = QPushButton("Write Coil")
-        coil_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; font-weight: bold; padding: 8px; }")
+        coil_btn = QPushButton(tr("Write Coil"))
+        coil_btn.setStyleSheet("QPushButton { background-color: #E65100; color: white; font-weight: bold; padding: 8px; border-radius: 4px; }")
         coil_btn.clicked.connect(self._write_coil)
         coil_layout.addRow(coil_btn)
 
@@ -382,21 +379,21 @@ class GenericRegisterWidget(QWidget):
         self.write_log.setReadOnly(True)
         self.write_log.setMaximumHeight(150)
         self.write_log.setFont(QFont("Monospace", 9))
-        layout.addWidget(QLabel("Write Log:"))
+        layout.addWidget(QLabel(tr("Write Log") + ":"))
         layout.addWidget(self.write_log)
 
         layout.addStretch()
 
     def _write_single(self):
         if not self.client.connected:
-            self._log("ERROR: Not connected")
+            self._log("ERROR: " + tr("Not connected"))
             return
 
         addr = self.write_addr.value()
         value = self.write_value.value()
         slave = self.connection_panel.slave_address
 
-        dlg = WriteConfirmDialog("Register", addr, None, value, self)
+        dlg = WriteConfirmDialog(tr("Register"), addr, None, value, self)
         if dlg.exec() != QDialog.DialogCode.Accepted:
             return
 
@@ -405,13 +402,13 @@ class GenericRegisterWidget(QWidget):
 
     def _write_multiple(self):
         if not self.client.connected:
-            self._log("ERROR: Not connected")
+            self._log("ERROR: " + tr("Not connected"))
             return
 
         addr = self.multi_addr.value()
         text = self.multi_values.text().strip()
         if not text:
-            self._log("ERROR: No values specified")
+            self._log("ERROR: No values")
             return
 
         try:
@@ -423,11 +420,11 @@ class GenericRegisterWidget(QWidget):
                 else:
                     values.append(int(part))
         except ValueError as e:
-            self._log(f"ERROR: Invalid values: {e}")
+            self._log(f"ERROR: {e}")
             return
 
         slave = self.connection_panel.slave_address
-        dlg = WriteConfirmDialog("Registers", addr, None, values, self)
+        dlg = WriteConfirmDialog(tr("Register"), addr, None, values, self)
         if dlg.exec() != QDialog.DialogCode.Accepted:
             return
 
@@ -436,7 +433,7 @@ class GenericRegisterWidget(QWidget):
 
     def _write_coil(self):
         if not self.client.connected:
-            self._log("ERROR: Not connected")
+            self._log("ERROR: " + tr("Not connected"))
             return
 
         addr = self.coil_addr.value()
@@ -467,51 +464,45 @@ class BatchOperationsWidget(QWidget):
 
         # Instructions
         info = QLabel(
-            "<b>Batch Address Assignment Wizard</b><br><br>"
-            "This tool helps you assign unique addresses to multiple identical devices.<br>"
-            "Connect one device at a time, and click 'Assign Next Address' to set it.<br><br>"
-            "<b>Steps:</b><br>"
-            "1. Set the starting address and baud rate below<br>"
-            "2. Connect the first device (only one on the bus)<br>"
-            "3. Click 'Read Current Config' to verify communication<br>"
-            "4. Click 'Assign Next Address' to program the device<br>"
-            "5. Disconnect, connect next device, repeat"
+            f"<b>{tr('Batch Address Assignment')}</b><br><br>"
+            f"{tr('Assign unique addresses to multiple identical devices.')}<br>"
+            f"{tr('Connect one device at a time.')}<br>"
         )
         info.setWordWrap(True)
         info.setStyleSheet("padding: 12px; background-color: #FFF3E0; border-radius: 4px; margin-bottom: 8px;")
         layout.addWidget(info)
 
         # Config
-        config_group = QGroupBox("Batch Configuration")
+        config_group = QGroupBox(tr("Batch Configuration"))
         config_layout = QFormLayout(config_group)
 
         self.current_addr = QSpinBox()
         self.current_addr.setRange(1, 247)
         self.current_addr.setValue(1)
-        config_layout.addRow("Current device address:", self.current_addr)
+        config_layout.addRow(tr("Current Address:"), self.current_addr)
 
         self.next_addr = QSpinBox()
         self.next_addr.setRange(1, 247)
         self.next_addr.setValue(2)
-        config_layout.addRow("Next address to assign:", self.next_addr)
+        config_layout.addRow(tr("Next Address:"), self.next_addr)
 
         self.target_baud = QComboBox()
-        self.target_baud.addItems(["Keep current", "1200", "2400", "4800", "9600", "14400", "19200", "38400"])
-        self.target_baud.setCurrentText("Keep current")
-        config_layout.addRow("Target baud rate:", self.target_baud)
+        self.target_baud.addItems([tr("Keep current"), "1200", "2400", "4800", "9600", "14400", "19200", "38400"])
+        self.target_baud.setCurrentIndex(0)
+        config_layout.addRow(tr("Target baud rate:"), self.target_baud)
 
         layout.addWidget(config_group)
 
         # Actions
         btn_layout = QHBoxLayout()
 
-        read_btn = QPushButton("Read Current Config")
-        read_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; font-weight: bold; padding: 8px; }")
+        read_btn = QPushButton(tr("Read Current Config"))
+        read_btn.setStyleSheet("QPushButton { background-color: #1976D2; color: white; font-weight: bold; padding: 8px; border-radius: 4px; }")
         read_btn.clicked.connect(self._read_current)
         btn_layout.addWidget(read_btn)
 
-        self.assign_btn = QPushButton("Assign Next Address")
-        self.assign_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 8px; }")
+        self.assign_btn = QPushButton(tr("Assign Next Address"))
+        self.assign_btn.setStyleSheet("QPushButton { background-color: #2E7D32; color: white; font-weight: bold; padding: 8px; border-radius: 4px; }")
         self.assign_btn.clicked.connect(self._assign_next)
         btn_layout.addWidget(self.assign_btn)
 
@@ -521,7 +512,7 @@ class BatchOperationsWidget(QWidget):
         self.batch_log = QTextEdit()
         self.batch_log.setReadOnly(True)
         self.batch_log.setFont(QFont("Monospace", 10))
-        layout.addWidget(QLabel("Operation Log:"))
+        layout.addWidget(QLabel(tr("Operation Log") + ":"))
         layout.addWidget(self.batch_log)
 
     def set_profile(self, profile: DeviceProfile | None):
@@ -533,11 +524,11 @@ class BatchOperationsWidget(QWidget):
 
     def _read_current(self):
         if not self.client.connected:
-            self._log("Not connected!", "red")
+            self._log(tr("Not connected") + "!", "red")
             return
 
         slave = self.current_addr.value()
-        self._log(f"Reading config from slave {slave}...")
+        self._log(f"{tr('Reading configuration from device')} {slave}...")
 
         if self._profile:
             addr_reg = self._profile.get_address_register()
@@ -546,41 +537,40 @@ class BatchOperationsWidget(QWidget):
             if addr_reg:
                 ok, vals = self.client.read_holding_registers(addr_reg.address, 1, slave)
                 if ok:
-                    self._log(f"  Address register (0x{addr_reg.address:04X}): {vals[0]}", "#2196F3")
+                    self._log(f"  {tr('Address')} (0x{addr_reg.address:04X}): {vals[0]}", "#1976D2")
                 else:
-                    self._log(f"  Address register read failed: {vals}", "red")
+                    self._log(f"  {tr('Address')} read failed: {vals}", "red")
 
             if baud_reg:
                 ok, vals = self.client.read_holding_registers(baud_reg.address, 1, slave)
                 if ok:
                     display = baud_reg.display_value(vals[0])
-                    self._log(f"  Baud rate register (0x{baud_reg.address:04X}): {display}", "#2196F3")
+                    self._log(f"  {tr('Baud Rate')} (0x{baud_reg.address:04X}): {display}", "#1976D2")
                 else:
-                    self._log(f"  Baud rate register read failed: {vals}", "red")
+                    self._log(f"  {tr('Baud Rate')} read failed: {vals}", "red")
         else:
             # Generic: try reading register 0
             ok, vals = self.client.read_holding_registers(0, 1, slave)
             if ok:
-                self._log(f"  Register 0: {vals[0]}", "#2196F3")
+                self._log(f"  Register 0: {vals[0]}", "#1976D2")
             else:
                 self._log(f"  Read failed: {vals}", "red")
 
     def _assign_next(self):
         if not self.client.connected:
-            self._log("Not connected!", "red")
+            self._log(tr("Not connected") + "!", "red")
             return
 
         slave = self.current_addr.value()
         new_addr = self.next_addr.value()
 
         if slave == new_addr:
-            self._log("Current and new address are the same!", "red")
+            self._log(tr("Current and new address are the same!"), "red")
             return
 
         reply = QMessageBox.question(
-            self, "Confirm Address Change",
-            f"Change device address from {slave} to {new_addr}?\n\n"
-            "Make sure only ONE device is connected to the bus.",
+            self, tr("Confirm Address Change"),
+            f"{tr('Change device address from')} {slave} → {new_addr}?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         if reply != QMessageBox.StandardButton.Yes:
@@ -591,11 +581,11 @@ class BatchOperationsWidget(QWidget):
             if addr_reg:
                 ok, msg = self.client.write_single_register(addr_reg.address, new_addr, slave)
                 if ok:
-                    self._log(f"Address changed: {slave} -> {new_addr}", "#4CAF50")
+                    self._log(f"{tr('Address changed')}: {slave} → {new_addr}", "#2E7D32")
 
                     # Change baud if requested
                     target = self.target_baud.currentText()
-                    if target != "Keep current":
+                    if target != tr("Keep current"):
                         baud_reg = self._profile.get_baudrate_register()
                         if baud_reg:
                             raw = baud_reg.reverse_value_map(int(target))
@@ -604,27 +594,27 @@ class BatchOperationsWidget(QWidget):
                                     baud_reg.address, raw, new_addr
                                 )
                                 if ok2:
-                                    self._log(f"Baud rate set to {target}", "#4CAF50")
+                                    self._log(f"{tr('Baud Rate')} → {target}", "#2E7D32")
                                 else:
-                                    self._log(f"Baud rate write failed: {msg2}", "red")
+                                    self._log(f"{tr('Baud Rate')} write failed: {msg2}", "red")
 
                     # Increment next address
                     self.next_addr.setValue(new_addr + 1)
                     self.current_addr.setValue(1)  # Reset to default for next device
-                    self._log("Ready for next device. Connect it and click 'Read Current Config'.", "#FF9800")
+                    self._log(tr("Ready for next device."), "#E65100")
                 else:
-                    self._log(f"Address write failed: {msg}", "red")
+                    self._log(f"{tr('Address')} write failed: {msg}", "red")
                 return
 
         # Generic fallback — try common address registers
-        self._log("No profile loaded. Trying common address registers...", "#FF9800")
+        self._log(tr("No profile selected") + ". Trying common registers...", "#E65100")
         for reg_addr in [0x07D0, 0x0100, 0x0000]:
             ok, msg = self.client.write_single_register(reg_addr, new_addr, slave)
             if ok:
-                self._log(f"Written to 0x{reg_addr:04X}: {slave} -> {new_addr}", "#4CAF50")
+                self._log(f"Written 0x{reg_addr:04X}: {slave} → {new_addr}", "#2E7D32")
                 self.next_addr.setValue(new_addr + 1)
                 return
-        self._log("All attempts failed. Load a device profile for reliable operation.", "red")
+        self._log(tr("All attempts failed. Load a device profile."), "red")
 
 
 class ConfigTab(QWidget):
@@ -643,13 +633,13 @@ class ConfigTab(QWidget):
         tabs = QTabWidget()
 
         self.profile_config = ProfileConfigWidget(self.client, self.connection_panel)
-        tabs.addTab(self.profile_config, "Profile Registers")
+        tabs.addTab(self.profile_config, tr("Profile Registers"))
 
         self.generic_config = GenericRegisterWidget(self.client, self.connection_panel)
-        tabs.addTab(self.generic_config, "Generic Read/Write")
+        tabs.addTab(self.generic_config, tr("Generic Read/Write"))
 
         self.batch_ops = BatchOperationsWidget(self.client, self.connection_panel)
-        tabs.addTab(self.batch_ops, "Batch Operations")
+        tabs.addTab(self.batch_ops, tr("Batch Operations"))
 
         layout.addWidget(tabs)
 

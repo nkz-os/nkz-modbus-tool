@@ -6,10 +6,12 @@ from PyQt6.QtWidgets import (
     QPushButton, QLineEdit, QSpinBox, QTabWidget, QFormLayout, QFrame,
     QDoubleSpinBox, QMessageBox,
 )
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QIcon, QPainter, QPixmap, QPen, QColor
+from PyQt6.QtCore import QRect, QPoint
 
 from core.modbus_client import ModbusClient, SerialConfig, TcpConfig
 from core.device_profiles import ProfileManager, DeviceProfile
+from core.i18n import tr
 
 
 class StatusIndicator(QWidget):
@@ -62,7 +64,7 @@ class ConnectionPanel(QWidget):
         status_layout = QHBoxLayout(status_frame)
         status_layout.setContentsMargins(8, 4, 8, 4)
         self.status_led = StatusIndicator()
-        self.status_label = QLabel("Disconnected")
+        self.status_label = QLabel(tr("Disconnected"))
         self.status_label.setFont(QFont("", -1, QFont.Weight.Bold))
         status_layout.addWidget(self.status_led)
         status_layout.addWidget(self.status_label, 1)
@@ -80,40 +82,43 @@ class ConnectionPanel(QWidget):
         port_row = QHBoxLayout()
         self.port_combo = QComboBox()
         self.port_combo.setMinimumWidth(140)
-        self.refresh_btn = QPushButton("Refresh")
-        self.refresh_btn.setFixedWidth(60)
+        self.refresh_btn = QPushButton()
+        self.refresh_btn.setToolTip(tr("Refresh"))
+        self.refresh_btn.setFixedSize(32, 32)
+        self.refresh_btn.setIcon(self._make_refresh_icon())
+        self.refresh_btn.setIconSize(self.refresh_btn.size() - self.refresh_btn.size() / 4)
         self.refresh_btn.clicked.connect(self._refresh_ports)
         port_row.addWidget(self.port_combo, 1)
         port_row.addWidget(self.refresh_btn)
-        serial_layout.addRow("Port:", port_row)
+        serial_layout.addRow(tr("Port:"), port_row)
 
         self.baud_combo = QComboBox()
         self.baud_combo.setEditable(True)
         for b in [1200, 2400, 4800, 9600, 14400, 19200, 38400, 57600, 115200]:
             self.baud_combo.addItem(str(b))
         self.baud_combo.setCurrentText("9600")
-        serial_layout.addRow("Baud Rate:", self.baud_combo)
+        serial_layout.addRow(tr("Baud Rate:"), self.baud_combo)
 
         self.parity_combo = QComboBox()
-        self.parity_combo.addItems(["None (N)", "Even (E)", "Odd (O)"])
-        serial_layout.addRow("Parity:", self.parity_combo)
+        self.parity_combo.addItems([tr("None (N)"), tr("Even (E)"), tr("Odd (O)")])
+        serial_layout.addRow(tr("Parity:"), self.parity_combo)
 
         self.databits_combo = QComboBox()
         self.databits_combo.addItems(["8", "7", "6", "5"])
-        serial_layout.addRow("Data Bits:", self.databits_combo)
+        serial_layout.addRow(tr("Data Bits:"), self.databits_combo)
 
         self.stopbits_combo = QComboBox()
         self.stopbits_combo.addItems(["1", "1.5", "2"])
-        serial_layout.addRow("Stop Bits:", self.stopbits_combo)
+        serial_layout.addRow(tr("Stop Bits:"), self.stopbits_combo)
 
         self.timeout_spin = QDoubleSpinBox()
         self.timeout_spin.setRange(0.1, 30.0)
         self.timeout_spin.setValue(1.0)
         self.timeout_spin.setSuffix(" s")
         self.timeout_spin.setSingleStep(0.1)
-        serial_layout.addRow("Timeout:", self.timeout_spin)
+        serial_layout.addRow(tr("Timeout:"), self.timeout_spin)
 
-        self.conn_tabs.addTab(serial_widget, "Serial RTU")
+        self.conn_tabs.addTab(serial_widget, tr("Serial RTU"))
 
         # TCP tab
         tcp_widget = QWidget()
@@ -121,28 +126,28 @@ class ConnectionPanel(QWidget):
         tcp_layout.setContentsMargins(6, 6, 6, 6)
 
         self.tcp_host = QLineEdit("192.168.1.1")
-        tcp_layout.addRow("Host/IP:", self.tcp_host)
+        tcp_layout.addRow(tr("Host/IP:"), self.tcp_host)
 
         self.tcp_port = QSpinBox()
         self.tcp_port.setRange(1, 65535)
         self.tcp_port.setValue(502)
-        tcp_layout.addRow("Port:", self.tcp_port)
+        tcp_layout.addRow(tr("Port:"), self.tcp_port)
 
         self.tcp_timeout = QDoubleSpinBox()
         self.tcp_timeout.setRange(0.1, 30.0)
         self.tcp_timeout.setValue(3.0)
         self.tcp_timeout.setSuffix(" s")
-        tcp_layout.addRow("Timeout:", self.tcp_timeout)
+        tcp_layout.addRow(tr("Timeout:"), self.tcp_timeout)
 
-        self.conn_tabs.addTab(tcp_widget, "Modbus TCP")
+        self.conn_tabs.addTab(tcp_widget, tr("Modbus TCP"))
         layout.addWidget(self.conn_tabs)
 
         # --- Connect/Disconnect buttons ---
         btn_layout = QHBoxLayout()
-        self.connect_btn = QPushButton("Connect")
+        self.connect_btn = QPushButton(tr("Connect"))
         self.connect_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 6px; }")
         self.connect_btn.clicked.connect(self._connect)
-        self.disconnect_btn = QPushButton("Disconnect")
+        self.disconnect_btn = QPushButton(tr("Disconnect"))
         self.disconnect_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; font-weight: bold; padding: 6px; }")
         self.disconnect_btn.clicked.connect(self._disconnect)
         self.disconnect_btn.setEnabled(False)
@@ -151,29 +156,29 @@ class ConnectionPanel(QWidget):
         layout.addLayout(btn_layout)
 
         # --- Device Profile ---
-        profile_group = QGroupBox("Device Profile")
+        profile_group = QGroupBox(tr("Device Profile"))
         profile_layout = QVBoxLayout(profile_group)
         profile_layout.setContentsMargins(6, 6, 6, 6)
 
         self.profile_combo = QComboBox()
-        self.profile_combo.addItem("(No profile - Generic)")
+        self.profile_combo.addItem(tr("(No profile - Generic)"))
         for name in self.profile_manager.list_profiles():
             self.profile_combo.addItem(name)
         self.profile_combo.currentTextChanged.connect(self._on_profile_changed)
         profile_layout.addWidget(self.profile_combo)
 
-        self.profile_info = QLabel("Select a profile to auto-configure parameters")
+        self.profile_info = QLabel(tr("Select a profile to auto-configure parameters"))
         self.profile_info.setWordWrap(True)
         self.profile_info.setStyleSheet("color: #666; font-size: 11px;")
         profile_layout.addWidget(self.profile_info)
 
         profile_btn_layout = QHBoxLayout()
-        self.apply_profile_btn = QPushButton("Apply Defaults")
+        self.apply_profile_btn = QPushButton(tr("Apply Defaults"))
         self.apply_profile_btn.clicked.connect(self._apply_profile_defaults)
         self.apply_profile_btn.setEnabled(False)
         profile_btn_layout.addWidget(self.apply_profile_btn)
 
-        self.new_profile_btn = QPushButton("New Profile...")
+        self.new_profile_btn = QPushButton(tr("New Profile..."))
         self.new_profile_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; }")
         self.new_profile_btn.clicked.connect(self._open_wizard)
         profile_btn_layout.addWidget(self.new_profile_btn)
@@ -182,13 +187,13 @@ class ConnectionPanel(QWidget):
         layout.addWidget(profile_group)
 
         # --- Slave Address ---
-        slave_group = QGroupBox("Target Device")
+        slave_group = QGroupBox(tr("Target Device"))
         slave_layout = QFormLayout(slave_group)
         slave_layout.setContentsMargins(6, 6, 6, 6)
         self.slave_spin = QSpinBox()
         self.slave_spin.setRange(1, 247)
         self.slave_spin.setValue(1)
-        slave_layout.addRow("Slave Address:", self.slave_spin)
+        slave_layout.addRow(tr("Slave Address:"), self.slave_spin)
         layout.addWidget(slave_group)
 
         layout.addStretch()
@@ -197,6 +202,44 @@ class ConnectionPanel(QWidget):
         self._port_timer = QTimer()
         self._port_timer.timeout.connect(self._refresh_ports_silent)
         self._port_timer.start(5000)
+
+    @staticmethod
+    def _make_refresh_icon() -> QIcon:
+        """Draw a circular-arrows refresh icon."""
+        size = 48
+        pm = QPixmap(size, size)
+        pm.fill(QColor(0, 0, 0, 0))
+        p = QPainter(pm)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        pen = QPen(QColor("#546E7A"), 3.5)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        p.setPen(pen)
+        # Draw arc (270 degrees, leaving a gap for the arrowhead)
+        margin = 8
+        rect = QRect(margin, margin, size - 2 * margin, size - 2 * margin)
+        # Qt uses 1/16th of a degree; start at top-right, sweep 270 deg CCW
+        p.drawArc(rect, 45 * 16, 270 * 16)
+        # Arrowhead at the top-right end of the arc
+        import math
+        cx, cy = size / 2, size / 2
+        r = (size - 2 * margin) / 2
+        angle = math.radians(45)
+        ax = cx + r * math.cos(angle)
+        ay = cy - r * math.sin(angle)
+        arrow_pen = QPen(QColor("#546E7A"), 2.5)
+        arrow_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        p.setPen(arrow_pen)
+        p.setBrush(QColor("#546E7A"))
+        from PyQt6.QtGui import QPolygonF
+        from PyQt6.QtCore import QPointF
+        # Arrow points along the arc tangent
+        p.drawPolygon(QPolygonF([
+            QPointF(ax, ay),
+            QPointF(ax - 7, ay - 3),
+            QPointF(ax - 2, ay + 6),
+        ]))
+        p.end()
+        return QIcon(pm)
 
     def _refresh_ports(self):
         current = self.port_combo.currentText()
@@ -210,7 +253,7 @@ class ConnectionPanel(QWidget):
                 self.port_combo.setCurrentIndex(i)
                 break
         if not ports:
-            self.port_combo.addItem("(No ports found)")
+            self.port_combo.addItem(tr("(No ports found)"))
 
     def _refresh_ports_silent(self):
         """Refresh ports without resetting selection if nothing changed."""
@@ -236,7 +279,7 @@ class ConnectionPanel(QWidget):
             # Serial
             port_data = self.port_combo.currentData()
             if not port_data:
-                self.status_message.emit("No port selected")
+                self.status_message.emit(tr("No port selected"))
                 return
             config = SerialConfig(
                 port=port_data,
@@ -258,28 +301,28 @@ class ConnectionPanel(QWidget):
 
         if ok:
             self.status_led.set_connected(True)
-            self.status_label.setText("Connected")
+            self.status_label.setText(tr("Connected"))
             self.connect_btn.setEnabled(False)
             self.disconnect_btn.setEnabled(True)
             self.connection_changed.emit(True)
         else:
-            QMessageBox.warning(self, "Connection Failed", msg)
+            QMessageBox.warning(self, tr("Connection Failed"), msg)
 
         self.status_message.emit(msg)
 
     def _disconnect(self):
         self.client.disconnect()
         self.status_led.set_connected(False)
-        self.status_label.setText("Disconnected")
+        self.status_label.setText(tr("Disconnected"))
         self.connect_btn.setEnabled(True)
         self.disconnect_btn.setEnabled(False)
         self.connection_changed.emit(False)
-        self.status_message.emit("Disconnected")
+        self.status_message.emit(tr("Disconnected"))
 
     def _on_profile_changed(self, name: str):
         if name.startswith("("):
             self._current_profile = None
-            self.profile_info.setText("Select a profile to auto-configure parameters")
+            self.profile_info.setText(tr("Select a profile to auto-configure parameters"))
             self.apply_profile_btn.setEnabled(False)
             self.profile_changed.emit(None)
         else:

@@ -15,6 +15,7 @@ from PyQt6.QtGui import QFont, QColor, QTextCharFormat
 
 from core.modbus_client import ModbusClient
 from core.device_profiles import DeviceProfile, RegisterDef
+from core.i18n import tr
 
 
 class MonitorTab(QWidget):
@@ -42,7 +43,7 @@ class MonitorTab(QWidget):
         top_layout.setContentsMargins(0, 0, 0, 0)
 
         # Read controls
-        controls_group = QGroupBox("Register Read")
+        controls_group = QGroupBox(tr("Register Read"))
         controls_layout = QVBoxLayout(controls_group)
 
         row1 = QHBoxLayout()
@@ -55,7 +56,7 @@ class MonitorTab(QWidget):
             "FC01 - Coils",
             "FC02 - Discrete Inputs",
         ])
-        form.addRow("Function:", self.fc_combo)
+        form.addRow(tr("Function:"), self.fc_combo)
         row1.addLayout(form)
 
         form2 = QFormLayout()
@@ -64,32 +65,32 @@ class MonitorTab(QWidget):
         self.reg_address.setValue(0)
         self.reg_address.setPrefix("0x")
         self.reg_address.setDisplayIntegerBase(16)
-        form2.addRow("Start Addr:", self.reg_address)
+        form2.addRow(tr("Start Address:"), self.reg_address)
         row1.addLayout(form2)
 
         form3 = QFormLayout()
         self.reg_count = QSpinBox()
         self.reg_count.setRange(1, 125)
         self.reg_count.setValue(1)
-        form3.addRow("Count:", self.reg_count)
+        form3.addRow(tr("Count:"), self.reg_count)
         row1.addLayout(form3)
 
         form4 = QFormLayout()
         self.data_format = QComboBox()
         self.data_format.addItems(["Unsigned 16-bit", "Signed 16-bit", "Hex", "Binary",
                                     "Float32 (2 reg)", "Unsigned 32-bit (2 reg)", "Signed 32-bit (2 reg)"])
-        form4.addRow("Format:", self.data_format)
+        form4.addRow(tr("Format:"), self.data_format)
         row1.addLayout(form4)
 
         controls_layout.addLayout(row1)
 
         row2 = QHBoxLayout()
-        self.read_btn = QPushButton("Read Once")
-        self.read_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; font-weight: bold; padding: 6px 16px; }")
+        self.read_btn = QPushButton(tr("Read Once"))
+        self.read_btn.setStyleSheet("QPushButton { background-color: #1976D2; color: white; font-weight: bold; padding: 6px 16px; border-radius: 4px; }")
         self.read_btn.clicked.connect(self._read_once)
         row2.addWidget(self.read_btn)
 
-        row2.addWidget(QLabel("Poll interval:"))
+        row2.addWidget(QLabel(tr("Interval:")))
         self.poll_interval = QDoubleSpinBox()
         self.poll_interval.setRange(0.1, 60.0)
         self.poll_interval.setValue(1.0)
@@ -97,16 +98,16 @@ class MonitorTab(QWidget):
         self.poll_interval.setSingleStep(0.1)
         row2.addWidget(self.poll_interval)
 
-        self.poll_btn = QPushButton("Start Polling")
-        self.poll_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 6px 16px; }")
+        self.poll_btn = QPushButton(tr("Start Polling"))
+        self.poll_btn.setStyleSheet("QPushButton { background-color: #2E7D32; color: white; font-weight: bold; padding: 6px 16px; border-radius: 4px; }")
         self.poll_btn.setCheckable(True)
         self.poll_btn.clicked.connect(self._toggle_polling)
         row2.addWidget(self.poll_btn)
 
         row2.addStretch()
 
-        self.read_profile_btn = QPushButton("Read Profile Registers")
-        self.read_profile_btn.setStyleSheet("QPushButton { background-color: #9C27B0; color: white; padding: 6px 12px; }")
+        self.read_profile_btn = QPushButton(tr("Read Profile Registers"))
+        self.read_profile_btn.setStyleSheet("QPushButton { background-color: #7B1FA2; color: white; padding: 6px 12px; border-radius: 4px; }")
         self.read_profile_btn.clicked.connect(self._read_profile_registers)
         self.read_profile_btn.setEnabled(False)
         row2.addWidget(self.read_profile_btn)
@@ -118,7 +119,8 @@ class MonitorTab(QWidget):
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(7)
         self.results_table.setHorizontalHeaderLabels([
-            "Register", "Name", "Raw (dec)", "Raw (hex)", "Formatted", "Unit", "Timestamp"
+            tr("Register"), tr("Name"), tr("Raw (dec)"), tr("Raw (hex)"),
+            tr("Formatted"), tr("Unit"), tr("Timestamp")
         ])
         self.results_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.results_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
@@ -136,15 +138,15 @@ class MonitorTab(QWidget):
         log_layout.setContentsMargins(4, 4, 4, 4)
 
         log_btn_layout = QHBoxLayout()
-        self.log_count_label = QLabel("Log entries: 0")
+        self.log_count_label = QLabel(tr("Log entries") + ": 0")
         log_btn_layout.addWidget(self.log_count_label)
         log_btn_layout.addStretch()
 
-        self.export_csv_btn = QPushButton("Export CSV")
+        self.export_csv_btn = QPushButton(tr("Export CSV"))
         self.export_csv_btn.clicked.connect(self._export_csv)
         log_btn_layout.addWidget(self.export_csv_btn)
 
-        self.clear_log_btn = QPushButton("Clear Log")
+        self.clear_log_btn = QPushButton(tr("Clear Log"))
         self.clear_log_btn.clicked.connect(self._clear_log)
         log_btn_layout.addWidget(self.clear_log_btn)
 
@@ -152,12 +154,14 @@ class MonitorTab(QWidget):
 
         self.log_table = QTableWidget()
         self.log_table.setColumnCount(5)
-        self.log_table.setHorizontalHeaderLabels(["Time", "Register", "Name", "Raw", "Value"])
+        self.log_table.setHorizontalHeaderLabels([
+            tr("Timestamp"), tr("Register"), tr("Name"), "Raw", tr("Formatted")
+        ])
         self.log_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.log_table.setAlternatingRowColors(True)
         log_layout.addWidget(self.log_table)
 
-        bottom_tabs.addTab(log_widget, "Data Log")
+        bottom_tabs.addTab(log_widget, tr("Data Log"))
 
         # Raw frames tab
         raw_widget = QWidget()
@@ -169,7 +173,7 @@ class MonitorTab(QWidget):
         self.auto_scroll_check.setChecked(True)
         raw_btn_layout.addWidget(self.auto_scroll_check)
         raw_btn_layout.addStretch()
-        self.clear_raw_btn = QPushButton("Clear")
+        self.clear_raw_btn = QPushButton(tr("Clear"))
         self.clear_raw_btn.clicked.connect(self._clear_raw)
         raw_btn_layout.addWidget(self.clear_raw_btn)
         raw_layout.addLayout(raw_btn_layout)
@@ -177,10 +181,10 @@ class MonitorTab(QWidget):
         self.raw_text = QTextEdit()
         self.raw_text.setReadOnly(True)
         self.raw_text.setFont(QFont("Monospace", 10))
-        self.raw_text.setStyleSheet("QTextEdit { background-color: #1e1e1e; color: #d4d4d4; }")
+        self.raw_text.setStyleSheet("QTextEdit { background-color: #1a1d23; color: #d4d4d4; border-radius: 4px; }")
         raw_layout.addWidget(self.raw_text)
 
-        bottom_tabs.addTab(raw_widget, "Raw Frames (TX/RX)")
+        bottom_tabs.addTab(raw_widget, tr("Raw Frames (TX/RX)"))
 
         main_splitter.addWidget(bottom_tabs)
         main_splitter.setStretchFactor(0, 2)
@@ -325,7 +329,7 @@ class MonitorTab(QWidget):
         self.log_table.setItem(log_row, 2, QTableWidgetItem(name))
         self.log_table.setItem(log_row, 3, QTableWidgetItem(str(raw)))
         self.log_table.setItem(log_row, 4, QTableWidgetItem(display_val))
-        self.log_count_label.setText(f"Log entries: {len(self._data_log)}")
+        self.log_count_label.setText(f"{tr('Log entries')}: {len(self._data_log)}")
 
     def _show_error_in_table(self, error: str):
         self.results_table.setRowCount(1)
@@ -342,12 +346,12 @@ class MonitorTab(QWidget):
                 return
             interval_ms = int(self.poll_interval.value() * 1000)
             self._poll_timer.start(interval_ms)
-            self.poll_btn.setText("Stop Polling")
-            self.poll_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; font-weight: bold; padding: 6px 16px; }")
+            self.poll_btn.setText(tr("Stop Polling"))
+            self.poll_btn.setStyleSheet("QPushButton { background-color: #C62828; color: white; font-weight: bold; padding: 6px 16px; border-radius: 4px; }")
         else:
             self._poll_timer.stop()
-            self.poll_btn.setText("Start Polling")
-            self.poll_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 6px 16px; }")
+            self.poll_btn.setText(tr("Start Polling"))
+            self.poll_btn.setStyleSheet("QPushButton { background-color: #2E7D32; color: white; font-weight: bold; padding: 6px 16px; border-radius: 4px; }")
 
     def _poll_tick(self):
         if not self.client.connected:
@@ -403,12 +407,12 @@ class MonitorTab(QWidget):
                 }
                 self._data_log.append(log_entry)
             else:
-                err_item = QTableWidgetItem("READ ERROR")
+                err_item = QTableWidgetItem(tr("READ ERROR"))
                 err_item.setForeground(QColor(255, 0, 0))
                 self.results_table.setItem(row, 4, err_item)
             self.results_table.setItem(row, 6, QTableWidgetItem(now))
 
-        self.log_count_label.setText(f"Log entries: {len(self._data_log)}")
+        self.log_count_label.setText(f"{tr('Log entries')}: {len(self._data_log)}")
 
     def _update_raw_display(self):
         """Update the raw frames text from the client's frame log."""
@@ -434,21 +438,21 @@ class MonitorTab(QWidget):
 
     def _export_csv(self):
         if not self._data_log:
-            QMessageBox.information(self, "Export", "No data to export")
+            QMessageBox.information(self, tr("Export CSV"), tr("No data to export"))
             return
-        path, _ = QFileDialog.getSaveFileName(self, "Export CSV", "", "CSV Files (*.csv)")
+        path, _ = QFileDialog.getSaveFileName(self, tr("Export CSV"), "", "CSV Files (*.csv)")
         if not path:
             return
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=["time", "register", "name", "raw", "value", "unit"])
             writer.writeheader()
             writer.writerows(self._data_log)
-        QMessageBox.information(self, "Export", f"Exported {len(self._data_log)} entries to {path}")
+        QMessageBox.information(self, tr("Export CSV"), f"{len(self._data_log)} entries exported")
 
     def _clear_log(self):
         self._data_log.clear()
         self.log_table.setRowCount(0)
-        self.log_count_label.setText("Log entries: 0")
+        self.log_count_label.setText(f"{tr('Log entries')}: 0")
 
     def _clear_raw(self):
         self.raw_text.clear()

@@ -12,6 +12,7 @@ from PyQt6.QtGui import QFont, QColor
 
 from core.modbus_client import ModbusClient
 from core.device_profiles import DeviceProfile, RegisterDef
+from core.i18n import tr
 
 
 class SensorValueCard(QFrame):
@@ -174,7 +175,7 @@ class DashboardTab(QWidget):
         actions_layout = QHBoxLayout(actions_group)
         actions_layout.setSpacing(8)
 
-        self._read_data_btn = QPushButton("Read Sensor Data")
+        self._read_data_btn = QPushButton(tr("Read Sensor Data"))
         self._read_data_btn.setFont(QFont("", 11, QFont.Weight.Bold))
         self._read_data_btn.setMinimumHeight(44)
         self._read_data_btn.setStyleSheet("""
@@ -188,7 +189,7 @@ class DashboardTab(QWidget):
         self._read_data_btn.clicked.connect(self._read_data)
         actions_layout.addWidget(self._read_data_btn)
 
-        self._read_config_btn = QPushButton("Read Device Config")
+        self._read_config_btn = QPushButton(tr("Read Device Config"))
         self._read_config_btn.setFont(QFont("", 11, QFont.Weight.Bold))
         self._read_config_btn.setMinimumHeight(44)
         self._read_config_btn.setStyleSheet("""
@@ -205,7 +206,7 @@ class DashboardTab(QWidget):
         # Auto-read toggle
         auto_frame = QVBoxLayout()
         auto_row = QHBoxLayout()
-        self._auto_btn = QPushButton("Auto-Read")
+        self._auto_btn = QPushButton(tr("Auto-Read"))
         self._auto_btn.setCheckable(True)
         self._auto_btn.setMinimumHeight(44)
         self._auto_btn.setFont(QFont("", 11, QFont.Weight.Bold))
@@ -249,9 +250,9 @@ class DashboardTab(QWidget):
         log_layout.setContentsMargins(0, 0, 0, 0)
 
         log_header = QHBoxLayout()
-        log_header.addWidget(QLabel("Activity Log"))
+        log_header.addWidget(QLabel(tr("Activity Log")))
         log_header.addStretch()
-        clear_log_btn = QPushButton("Clear")
+        clear_log_btn = QPushButton(tr("Clear"))
         clear_log_btn.setFixedWidth(60)
         clear_log_btn.clicked.connect(lambda: self._log_text.clear())
         log_header.addWidget(clear_log_btn)
@@ -278,8 +279,7 @@ class DashboardTab(QWidget):
 
         # No-profile placeholder
         self._no_profile_label = QLabel(
-            "Select a device profile from the left panel\n"
-            "to see sensor data here"
+            tr("Select a device profile to see sensor values")
         )
         self._no_profile_label.setFont(QFont("", 14))
         self._no_profile_label.setStyleSheet("color: #999;")
@@ -301,14 +301,13 @@ class DashboardTab(QWidget):
 
         if not self._profile:
             self._no_profile_label = QLabel(
-                "Select a device profile from the left panel\n"
-                "to see sensor data here"
+                tr("Select a device profile to see sensor values")
             )
             self._no_profile_label.setFont(QFont("", 14))
             self._no_profile_label.setStyleSheet("color: #999;")
             self._no_profile_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self._cards_layout.addWidget(self._no_profile_label, 0, 0)
-            self._status_label.setText("No profile selected")
+            self._status_label.setText(tr("No profile selected"))
             return
 
         self._status_label.setText(
@@ -480,7 +479,7 @@ class DashboardTab(QWidget):
                 return
             interval = int(self._auto_interval.value() * 1000)
             self._poll_timer.start(interval)
-            self._auto_btn.setText("Stop Auto-Read")
+            self._auto_btn.setText(tr("Stop Auto-Read"))
             self._log(
                 f"Auto-read started (every {self._auto_interval.value():.1f}s)",
                 "success"
@@ -491,7 +490,7 @@ class DashboardTab(QWidget):
     def _stop_auto(self):
         self._poll_timer.stop()
         self._auto_btn.setChecked(False)
-        self._auto_btn.setText("Auto-Read")
+        self._auto_btn.setText(tr("Auto-Read"))
 
     def _auto_read_data(self):
         if not self.client.connected:

@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFont
 
 from core.device_profiles import DeviceProfile, RegisterDef, save_profile
+from core.i18n import tr
 
 
 # ─── Step 1: Device Info ─────────────────────────────────────────────────────
@@ -23,59 +24,59 @@ class DeviceInfoPage(QWizardPage):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle("Device Information")
-        self.setSubTitle(
-            "Enter the basic information about the sensor. "
-            "You can find this in the device manual or datasheet."
-        )
+        self.setTitle(tr("Device Information"))
+        self.setSubTitle(tr(
+            "Enter the basic information about the device. "
+            "Check the device manual or datasheet."
+        ))
 
         layout = QFormLayout(self)
         layout.setSpacing(10)
 
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g. Soil Moisture & Temperature Sensor")
-        layout.addRow("Device name:", self.name_edit)
+        layout.addRow(tr("Device Name:"), self.name_edit)
         self.registerField("device_name*", self.name_edit)
 
         self.manufacturer_edit = QLineEdit()
         self.manufacturer_edit.setPlaceholderText("e.g. Shandong Renke")
-        layout.addRow("Manufacturer:", self.manufacturer_edit)
+        layout.addRow(tr("Manufacturer:"), self.manufacturer_edit)
 
         self.description_edit = QLineEdit()
         self.description_edit.setPlaceholderText("e.g. RS485 Modbus RTU soil sensor, 3 channels")
-        layout.addRow("Description:", self.description_edit)
+        layout.addRow(tr("Description:"), self.description_edit)
 
         # Communication defaults
         layout.addRow(QLabel(""))
-        header = QLabel("Communication Defaults")
+        header = QLabel(tr("Communication Defaults"))
         header.setFont(QFont("", 11, QFont.Weight.Bold))
         layout.addRow(header)
 
-        info = QLabel("These are the factory default values for new devices.\nCheck the manual for the correct values.")
+        info = QLabel(tr("Factory default values for new devices."))
         info.setStyleSheet("color: #666; font-size: 11px;")
         layout.addRow(info)
 
         self.default_addr = QSpinBox()
         self.default_addr.setRange(1, 247)
         self.default_addr.setValue(1)
-        layout.addRow("Default address:", self.default_addr)
+        layout.addRow(tr("Default Address:"), self.default_addr)
 
         self.default_baud = QComboBox()
         self.default_baud.addItems(["1200", "2400", "4800", "9600", "14400", "19200", "38400", "57600", "115200"])
         self.default_baud.setCurrentText("9600")
-        layout.addRow("Default baud rate:", self.default_baud)
+        layout.addRow(tr("Default Baud Rate:"), self.default_baud)
 
         self.default_parity = QComboBox()
-        self.default_parity.addItems(["None (N)", "Even (E)", "Odd (O)"])
-        layout.addRow("Default parity:", self.default_parity)
+        self.default_parity.addItems([tr("None (N)"), tr("Even (E)"), tr("Odd (O)")])
+        layout.addRow(tr("Default Parity:"), self.default_parity)
 
         self.default_databits = QComboBox()
         self.default_databits.addItems(["8", "7"])
-        layout.addRow("Default data bits:", self.default_databits)
+        layout.addRow(tr("Data Bits:"), self.default_databits)
 
         self.default_stopbits = QComboBox()
         self.default_stopbits.addItems(["1", "2"])
-        layout.addRow("Default stop bits:", self.default_stopbits)
+        layout.addRow(tr("Stop Bits:"), self.default_stopbits)
 
 
 # ─── Register Editor Dialog ───────────────────────────────────────────────────
@@ -85,7 +86,7 @@ class RegisterEditorDialog(QDialog):
 
     def __init__(self, register: dict = None, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Add Register" if not register else "Edit Register")
+        self.setWindowTitle(tr("Add Register") if not register else tr("Edit Register"))
         self.setMinimumWidth(500)
         self._result = None
 
@@ -97,7 +98,7 @@ class RegisterEditorDialog(QDialog):
         # Name
         self.name_edit = QLineEdit()
         self.name_edit.setPlaceholderText("e.g. Temperature, Humidity, Device Address...")
-        form.addRow("Name:", self.name_edit)
+        form.addRow(tr("Name:"), self.name_edit)
 
         # Address
         addr_layout = QHBoxLayout()
@@ -112,22 +113,22 @@ class RegisterEditorDialog(QDialog):
         )
         addr_layout.addWidget(self.addr_decimal)
         addr_layout.addStretch()
-        form.addRow("Register address:", addr_layout)
+        form.addRow(tr("Register Address:"), addr_layout)
 
         # Description
         self.desc_edit = QLineEdit()
         self.desc_edit.setPlaceholderText("e.g. Ambient temperature (value / 10)")
-        form.addRow("Description:", self.desc_edit)
+        form.addRow(tr("Description:"), self.desc_edit)
 
         # Unit
         self.unit_edit = QLineEdit()
         self.unit_edit.setPlaceholderText("e.g. \u00b0C, %RH, \u00b5mol/m\u00b2\u00b7s, ppm")
-        form.addRow("Unit:", self.unit_edit)
+        form.addRow(tr("Unit:"), self.unit_edit)
 
         # Data type
         self.type_combo = QComboBox()
         self.type_combo.addItems(["uint16", "int16", "uint32", "int32", "float32"])
-        form.addRow("Data type:", self.type_combo)
+        form.addRow(tr("Data type:"), self.type_combo)
 
         # Scale
         scale_layout = QHBoxLayout()
@@ -136,28 +137,28 @@ class RegisterEditorDialog(QDialog):
         self.scale_spin.setValue(1.0)
         self.scale_spin.setDecimals(4)
         scale_layout.addWidget(self.scale_spin)
-        scale_info = QLabel("e.g. 0.1 means raw value 235 = 23.5")
+        scale_info = QLabel(tr("e.g. 0.1 means raw 235 = 23.5"))
         scale_info.setStyleSheet("color: #666; font-size: 11px;")
         scale_layout.addWidget(scale_info)
-        form.addRow("Scale factor:", scale_layout)
+        form.addRow(tr("Scale factor:"), scale_layout)
 
         # Access
         self.access_combo = QComboBox()
         self.access_combo.addItems(["read", "readwrite"])
-        form.addRow("Access:", self.access_combo)
+        form.addRow(tr("Access:"), self.access_combo)
 
         # Function codes
         self.fc_read_combo = QComboBox()
         self.fc_read_combo.addItems(["03 - Holding Registers", "04 - Input Registers"])
-        form.addRow("Read function:", self.fc_read_combo)
+        form.addRow(tr("Read function:"), self.fc_read_combo)
 
         self.fc_write_combo = QComboBox()
         self.fc_write_combo.addItems(["06 - Write Single Register", "16 - Write Multiple Registers"])
-        form.addRow("Write function:", self.fc_write_combo)
+        form.addRow(tr("Write function:"), self.fc_write_combo)
 
         # Min/Max
         range_layout = QHBoxLayout()
-        self.has_range = QCheckBox("Limit values")
+        self.has_range = QCheckBox(tr("Limit values"))
         range_layout.addWidget(self.has_range)
         self.min_spin = QSpinBox()
         self.min_spin.setRange(-32768, 65535)
@@ -173,27 +174,27 @@ class RegisterEditorDialog(QDialog):
         range_layout.addWidget(self.max_spin)
         self.has_range.toggled.connect(self.min_spin.setEnabled)
         self.has_range.toggled.connect(self.max_spin.setEnabled)
-        form.addRow("Value range:", range_layout)
+        form.addRow(tr("Value range:"), range_layout)
 
         # Value map
         map_layout = QVBoxLayout()
         self.has_map = QCheckBox(
-            "Has value mapping (e.g. register value 1 = 1200 baud, 2 = 2400 baud...)"
+            tr("Has value mapping (e.g. 1=1200 baud, 2=2400...)")
         )
         map_layout.addWidget(self.has_map)
 
         self.map_table = QTableWidget(0, 2)
-        self.map_table.setHorizontalHeaderLabels(["Register Value", "Meaning"])
+        self.map_table.setHorizontalHeaderLabels([tr("Register Value"), tr("Meaning")])
         self.map_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.map_table.setMaximumHeight(150)
         self.map_table.setEnabled(False)
         map_layout.addWidget(self.map_table)
 
         map_btn_layout = QHBoxLayout()
-        self.add_map_btn = QPushButton("Add Mapping")
+        self.add_map_btn = QPushButton(tr("Add Mapping"))
         self.add_map_btn.setEnabled(False)
         self.add_map_btn.clicked.connect(self._add_map_row)
-        self.remove_map_btn = QPushButton("Remove Selected")
+        self.remove_map_btn = QPushButton(tr("Remove Selected"))
         self.remove_map_btn.setEnabled(False)
         self.remove_map_btn.clicked.connect(self._remove_map_row)
         map_btn_layout.addWidget(self.add_map_btn)
@@ -205,7 +206,7 @@ class RegisterEditorDialog(QDialog):
         self.has_map.toggled.connect(self.add_map_btn.setEnabled)
         self.has_map.toggled.connect(self.remove_map_btn.setEnabled)
 
-        form.addRow("Value mapping:", map_layout)
+        form.addRow(tr("Value mapping:"), map_layout)
 
         layout.addLayout(form)
 
@@ -267,7 +268,7 @@ class RegisterEditorDialog(QDialog):
     def _accept(self):
         name = self.name_edit.text().strip()
         if not name:
-            QMessageBox.warning(self, "Missing Name", "Enter a register name.")
+            QMessageBox.warning(self, tr("Error"), tr("Enter a register name."))
             return
 
         reg = {
@@ -322,31 +323,31 @@ class RegisterListPage(QWizardPage):
 
         # Helpful tips
         if reg_type == "data":
-            tip = QLabel(
-                "Data registers contain the sensor measurements (temperature, humidity, etc.).\n"
-                "These are usually read-only. Check the manual for register addresses."
-            )
+            tip = QLabel(tr(
+                "Data registers contain the sensor measurements.\n"
+                "Check the manual for register addresses."
+            ))
         else:
-            tip = QLabel(
-                "Config registers control device settings (address, baud rate, calibration).\n"
-                "These are usually read/write. The most common are device address and baud rate."
-            )
+            tip = QLabel(tr(
+                "Config registers control device settings.\n"
+                "The most common are device address and baud rate."
+            ))
         tip.setStyleSheet("color: #555; background-color: #FFF8E1; padding: 8px; border-radius: 4px;")
         tip.setWordWrap(True)
         layout.addWidget(tip)
 
         # Quick-add buttons for common registers
         if reg_type == "config":
-            quick_group = QGroupBox("Quick Add Common Registers")
+            quick_group = QGroupBox(tr("Quick Add Common Registers"))
             quick_layout = QHBoxLayout(quick_group)
 
-            addr_btn = QPushButton("+ Device Address")
-            addr_btn.setStyleSheet("QPushButton { background-color: #E3F2FD; padding: 6px 12px; }")
+            addr_btn = QPushButton("+ " + tr("Device Address"))
+            addr_btn.setStyleSheet("QPushButton { background-color: #E3F2FD; padding: 6px 12px; border-radius: 3px; }")
             addr_btn.clicked.connect(self._quick_add_address)
             quick_layout.addWidget(addr_btn)
 
-            baud_btn = QPushButton("+ Baud Rate")
-            baud_btn.setStyleSheet("QPushButton { background-color: #E3F2FD; padding: 6px 12px; }")
+            baud_btn = QPushButton("+ " + tr("Baud Rate"))
+            baud_btn.setStyleSheet("QPushButton { background-color: #E3F2FD; padding: 6px 12px; border-radius: 3px; }")
             baud_btn.clicked.connect(self._quick_add_baudrate)
             quick_layout.addWidget(baud_btn)
 
@@ -355,7 +356,9 @@ class RegisterListPage(QWizardPage):
 
         # Table
         self.table = QTableWidget(0, 5)
-        self.table.setHorizontalHeaderLabels(["Name", "Address", "Type", "Scale", "Access"])
+        self.table.setHorizontalHeaderLabels([
+            tr("Name"), tr("Address"), tr("Type"), tr("Scale"), tr("Access")
+        ])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
@@ -367,21 +370,21 @@ class RegisterListPage(QWizardPage):
 
         # Buttons
         btn_layout = QHBoxLayout()
-        add_btn = QPushButton("Add Register")
-        add_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 6px 16px; }")
+        add_btn = QPushButton(tr("Add Register"))
+        add_btn.setStyleSheet("QPushButton { background-color: #2E7D32; color: white; font-weight: bold; padding: 6px 16px; border-radius: 4px; }")
         add_btn.clicked.connect(self._add_register)
         btn_layout.addWidget(add_btn)
 
-        edit_btn = QPushButton("Edit Selected")
+        edit_btn = QPushButton(tr("Edit"))
         edit_btn.clicked.connect(self._edit_register)
         btn_layout.addWidget(edit_btn)
 
-        dup_btn = QPushButton("Duplicate")
+        dup_btn = QPushButton(tr("Duplicate"))
         dup_btn.clicked.connect(self._duplicate_register)
         btn_layout.addWidget(dup_btn)
 
-        remove_btn = QPushButton("Remove Selected")
-        remove_btn.setStyleSheet("QPushButton { background-color: #f44336; color: white; padding: 6px 12px; }")
+        remove_btn = QPushButton(tr("Remove"))
+        remove_btn.setStyleSheet("QPushButton { background-color: #C62828; color: white; padding: 6px 12px; border-radius: 4px; }")
         remove_btn.clicked.connect(self._remove_register)
         btn_layout.addWidget(remove_btn)
 
@@ -433,8 +436,8 @@ class RegisterListPage(QWizardPage):
             return
         name = self._registers[row]["name"]
         reply = QMessageBox.question(
-            self, "Remove Register",
-            f"Remove '{name}'?",
+            self, tr("Remove Register"),
+            f"{tr('Remove')} '{name}'?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         if reply == QMessageBox.StandardButton.Yes:
@@ -453,7 +456,6 @@ class RegisterListPage(QWizardPage):
             "min": 1,
             "max": 247,
         }
-        # Open editor pre-filled so user can adjust the address
         dlg = RegisterEditorDialog(register=reg, parent=self)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             result = dlg.get_result()
@@ -493,25 +495,25 @@ class ReviewPage(QWizardPage):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle("Review & Save")
-        self.setSubTitle(
-            "Review the generated profile below. "
-            "Click 'Finish' to save it to the profiles directory."
-        )
+        self.setTitle(tr("Review & Save"))
+        self.setSubTitle(tr(
+            "Review the generated profile. "
+            "Click 'Finish' to save."
+        ))
 
         layout = QVBoxLayout(self)
 
         self.preview = QTextEdit()
         self.preview.setReadOnly(True)
         self.preview.setFont(QFont("Monospace", 10))
-        self.preview.setStyleSheet("QTextEdit { background-color: #263238; color: #EEFFFF; }")
+        self.preview.setStyleSheet("QTextEdit { background-color: #1a1d23; color: #EEFFFF; border-radius: 4px; }")
         layout.addWidget(self.preview)
 
         # Save location
         loc_layout = QHBoxLayout()
-        loc_layout.addWidget(QLabel("Save as:"))
+        loc_layout.addWidget(QLabel(tr("Save as") + ":"))
         self.filename_edit = QLineEdit()
-        self.filename_edit.setPlaceholderText("auto-generated from device name")
+        self.filename_edit.setPlaceholderText(tr("auto-generated from device name"))
         loc_layout.addWidget(self.filename_edit)
         layout.addLayout(loc_layout)
 
@@ -534,7 +536,7 @@ class ProfileWizard(QWizard):
     def __init__(self, profiles_dir: str, parent=None):
         super().__init__(parent)
         self.profiles_dir = profiles_dir
-        self.setWindowTitle("New Device Profile Wizard")
+        self.setWindowTitle(tr("New Device Profile Wizard"))
         self.setMinimumSize(700, 600)
         self.setWizardStyle(QWizard.WizardStyle.ModernStyle)
 
@@ -543,17 +545,15 @@ class ProfileWizard(QWizard):
         self.addPage(self.info_page)
 
         self.data_page = RegisterListPage(
-            "Data Registers",
-            "Add the registers that contain sensor measurements.\n"
-            "These are the values you want to monitor (temperature, humidity, etc.).",
+            tr("Data Registers"),
+            tr("Add the registers that contain sensor measurements."),
             "data"
         )
         self.addPage(self.data_page)
 
         self.config_page = RegisterListPage(
-            "Configuration Registers",
-            "Add the registers used to configure the device.\n"
-            "Typical: device address, baud rate, calibration offsets.",
+            tr("Configuration Registers"),
+            tr("Add the registers used to configure the device."),
             "config"
         )
         self.addPage(self.config_page)
@@ -618,7 +618,7 @@ class ProfileWizard(QWizard):
     def accept(self):
         filename = self.review_page.get_filename()
         if not filename:
-            QMessageBox.warning(self, "No Filename", "Enter a filename.")
+            QMessageBox.warning(self, tr("Error"), tr("Enter a filename."))
             return
         if not filename.endswith(".json"):
             filename += ".json"
@@ -627,8 +627,8 @@ class ProfileWizard(QWizard):
 
         if os.path.exists(filepath):
             reply = QMessageBox.question(
-                self, "File Exists",
-                f"'{filename}' already exists. Overwrite?",
+                self, tr("File Exists"),
+                f"'{filename}' {tr('already exists. Overwrite?')}",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
             if reply != QMessageBox.StandardButton.Yes:
@@ -639,10 +639,9 @@ class ProfileWizard(QWizard):
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(json_text)
             QMessageBox.information(
-                self, "Profile Saved",
-                f"Profile saved to:\n{filepath}\n\n"
-                f"It will appear in the profile selector after reloading."
+                self, tr("Profile Saved"),
+                f"{tr('Profile saved to')}:\n{filepath}"
             )
             super().accept()
         except Exception as e:
-            QMessageBox.critical(self, "Save Error", f"Failed to save:\n{e}")
+            QMessageBox.critical(self, tr("Error"), f"{tr('Save failed')}:\n{e}")
